@@ -1,0 +1,20 @@
+name: file_lastModifiedDateTime
+on:
+  schedule: 
+    - cron:  '0 0,6,12,18 * * *'
+  workflow_dispatch:
+jobs:
+  api-requset:
+#     runs-on: self-hosted
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get access token
+        run: | 
+          curl -X POST -d "client_id=${{ secrets.CLIENT_ID }}&scope=https://graph.microsoft.com/.default&client_secret=${{ secrets.CLIENT_SECRET }}&grant_type=client_credentials" \
+            "https://login.microsoftonline.com/${{ secrets.TENANT_ID }}/oauth2/v2.0/token" > token_log.json
+          cat token_log.json | jq -r ".access_token"  > access_token
+
+      - name: Get File Info api
+        run: |
+          curl -X GET -H "Authorization: Bearer "`cat access_token` "https://graph.microsoft.com/v1.0/users/${{ secrets.USER_ID }}/drive/root:${{ secrets.FILE_PATH }}" \
+            | jq -r ".lastModifiedDateTime"
